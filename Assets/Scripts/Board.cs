@@ -41,6 +41,27 @@ public sealed class Board : MonoBehaviour
                 tiles[x, y] = tile;
             }
         }
+    } 
+    
+    public void SpawnNewTiles()
+    {
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var tile = tiles[x, y];
+                var connectedTiles = tile.GetConnectedTiles();
+                if (connectedTiles.Skip(1).Count() < 2) continue;
+                
+                int randomItemIndex = Random.Range(0, tile.Neighbours.Length);
+                var newItem = tile.Neighbours[randomItemIndex].Item;
+                
+                foreach (var connectedTile in connectedTiles)
+                {
+                    connectedTile.Item = ItemDatabase.items[Random.Range(0, ItemDatabase.items.Length)];
+                }
+            }
+        }
     }
 
     public async void Select(Tile tile)
@@ -112,9 +133,12 @@ public sealed class Board : MonoBehaviour
     private bool CanPop()
     {
         for (var y = 0; y < height; y++)
-        for (var x = 0; x < width; x++)
-            if (tiles[x, y].GetConnectedTiles().Skip(1).Count() >= 2)
-                return true;
+        {
+            for (var x = 0; x < width; x++)
+                if (tiles[x, y].GetConnectedTiles().Skip(1).Count() >= 2)
+                    return true;
+        }
+
         return false;
     }
 

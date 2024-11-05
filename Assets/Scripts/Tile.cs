@@ -25,11 +25,11 @@ public sealed class Tile : MonoBehaviour
     
     public Image icon;
     public Button button;
-    
-    public Tile Left => x > 0 ? Board.Instance.tiles[x - 1, y] : null;
-    public Tile Top => y > 0 ? Board.Instance.tiles[x , y - 1] : null;
-    public Tile Right => x < Board.Instance.width - 1 ? Board.Instance.tiles[x + 1, y] : null;
-    public Tile Bottom => y < Board.Instance.height - 1 ? Board.Instance.tiles[x, y + 1] : null;
+
+    private Tile Left => x > 0 ? Board.Instance.tiles[x - 1, y] : null;
+    private Tile Top => y > 0 ? Board.Instance.tiles[x , y - 1] : null;
+    private Tile Right => x < Board.Instance.width - 1 ? Board.Instance.tiles[x + 1, y] : null;
+    private Tile Bottom => y < Board.Instance.height - 1 ? Board.Instance.tiles[x, y + 1] : null;
 
     public Tile[] Neighbours => new[]
     {
