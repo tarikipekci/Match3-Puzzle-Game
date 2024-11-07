@@ -1362,6 +1362,7 @@ MonoBehaviour:
   - {fileID: 2132030920}
   - {fileID: 89286703}
   - {fileID: 999119387}
+  emptyItem: {fileID: 11400000, guid: d830cd49914706d4aac3c5d3beade281, type: 2}
 --- !u!82 &1753604923
 AudioSource:
   m_ObjectHideFlags: 0

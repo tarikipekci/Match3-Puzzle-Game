@@ -19,7 +19,7 @@ public sealed class Board : MonoBehaviour
     public int width => tiles.GetLength(0);
     public int height => tiles.GetLength(1);
 
-    private const float tweenDuration = 0.25f;
+    private const float tweenDuration = 0.15f;
 
     private readonly List<Tile> _selection = new List<Tile>();
     private void Awake() => Instance = this;
@@ -41,27 +41,94 @@ public sealed class Board : MonoBehaviour
                 tiles[x, y] = tile;
             }
         }
-    } 
-    
-    public void SpawnNewTiles()
+    }
+
+    private async Task DropUpperTiles()
+    {
+        while (true)
+        {
+            for (var y = 0; y < height; y++)
+            {
+                for (var x = 0; x < width; x++)
+                {
+                    var tile = tiles[x, y];
+                    var bottomTile = tile.Neighbours[3];
+                    if (tile.isEmpty) continue;
+                    switch (y)
+                    {
+                        case 4:
+                            continue;
+                        case 0 when bottomTile.isEmpty:
+                            bottomTile.Item = ItemDatabase.items[Random.Range(0, ItemDatabase.items.Length)];
+                            var deflateSequence = DOTween.Sequence();
+                            deflateSequence.Join(bottomTile.icon.transform.DOScale(Vector3.zero, tweenDuration));
+                            await deflateSequence.Play().AsyncWaitForCompletion();
+                            bottomTile.isEmpty = false;
+                            tile.isEmpty = true;
+                            await Swap(tile, bottomTile);
+                            break;
+                    }
+
+                    if (bottomTile.isEmpty)
+                    {
+                        bottomTile.isEmpty = false;
+                        tile.isEmpty = true;
+                        await Swap(tile, bottomTile);
+                    }
+                }
+            }
+
+            await SpawnNewTiles();
+            if (IsThereEmptyTile())
+            {
+                continue;
+            }
+
+            if (CanPop())
+            {
+                Pop();
+            }
+
+            break;
+        }
+    }
+
+    private async Task SpawnNewTiles()
+    {
+        for (var x = 0; x < height; x++)
+        {
+            var tile = tiles[x, 0];
+            if (tile.isEmpty)
+            {
+                tile.Item = ItemDatabase.items[Random.Range(0, ItemDatabase.items.Length)];
+                var inflateSequence = DOTween.Sequence();
+                inflateSequence.Join(tile.icon.transform.DOScale(Vector3.one, tweenDuration));
+                await inflateSequence.Play().AsyncWaitForCompletion();
+                tile.isEmpty = false;
+            }
+        }
+    }
+
+    private bool IsThereEmptyTile()
     {
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
             {
                 var tile = tiles[x, y];
-                var connectedTiles = tile.GetConnectedTiles();
-                if (connectedTiles.Skip(1).Count() < 2) continue;
-                
-                int randomItemIndex = Random.Range(0, tile.Neighbours.Length);
-                var newItem = tile.Neighbours[randomItemIndex].Item;
-                
-                foreach (var connectedTile in connectedTiles)
+                if (tile.isEmpty) continue;
+
+                var bottomTile = tile.Neighbours[3];
+                if (bottomTile == null) continue;
+
+                if (bottomTile.isEmpty)
                 {
-                    connectedTile.Item = ItemDatabase.items[Random.Range(0, ItemDatabase.items.Length)];
+                    return true;
                 }
             }
         }
+
+        return false;
     }
 
     public async void Select(Tile tile)
@@ -86,9 +153,6 @@ public sealed class Board : MonoBehaviour
         }
 
         if (_selection.Count < 2) return;
-
-        Debug.Log(
-            $"Selected tiles at ({_selection[0].x}, {_selection[0].y}) and at ({_selection[1].x}, {_selection[1].y})");
 
         await Swap(_selection[0], _selection[1]);
 
@@ -155,26 +219,26 @@ public sealed class Board : MonoBehaviour
                 var deflateSequence = DOTween.Sequence();
 
                 foreach (var connectedTile in connectedTiles)
+                {
                     deflateSequence.Join(connectedTile.icon.transform.DOScale(Vector3.zero, tweenDuration));
+                    connectedTile.isEmpty = true;
+                }
 
                 await deflateSequence.Play().AsyncWaitForCompletion();
 
                 audioSource.PlayOneShot(popUpSound);
                 ScoreCounter.Instance.Score += tile.Item.value * connectedTiles.Count;
 
-                var inflateSequence = DOTween.Sequence();
-
                 foreach (var connectedTile in connectedTiles)
                 {
                     connectedTile.Item = ItemDatabase.items[Random.Range(0, ItemDatabase.items.Length)];
-                    inflateSequence.Join(connectedTile.icon.transform.DOScale(Vector3.one, tweenDuration));
                 }
-
-                await inflateSequence.Play().AsyncWaitForCompletion();
 
                 x = 0;
                 y = 0;
             }
         }
+
+        await DropUpperTiles();
     }
 }

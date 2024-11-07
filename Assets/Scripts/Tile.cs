@@ -22,6 +22,8 @@ public sealed class Tile : MonoBehaviour
             icon.sprite = _item.sprite;
         }
     }
+
+    public bool isEmpty;
     
     public Image icon;
     public Button button;
@@ -59,7 +61,7 @@ public sealed class Tile : MonoBehaviour
 
         foreach (var neighbour in Neighbours)
         {
-            if (neighbour == null || exclude.Contains(neighbour) || neighbour.Item != Item) continue;
+            if (neighbour == null || exclude.Contains(neighbour) || neighbour.Item != Item || isEmpty) continue;
             
             result.AddRange(neighbour.GetConnectedTiles(exclude));
         }
