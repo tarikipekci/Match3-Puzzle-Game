@@ -19,9 +19,9 @@ public sealed class Board : MonoBehaviour
     public int width => tiles.GetLength(0);
     public int height => tiles.GetLength(1);
 
-    private const float tweenDuration = 0.15f;
+    private const float tweenDuration = 0.2f;
 
-    private readonly List<Tile> _selection = new List<Tile>();
+    private readonly List<Tile> _selection = new();
     private void Awake() => Instance = this;
 
     private void Start()
@@ -43,55 +43,85 @@ public sealed class Board : MonoBehaviour
         }
     }
 
-    private async Task DropUpperTiles()
+    private async void DropUpperTiles()
     {
         while (true)
         {
-            for (var y = 0; y < height; y++)
+            bool moved = false;
+            var tasks = new List<Task>();
+
+            for (var x = 0; x < width; x++)
             {
-                for (var x = 0; x < width; x++)
+                for (var y = 0; y < height; y++)
                 {
                     var tile = tiles[x, y];
-                    var bottomTile = tile.Neighbours[3];
                     if (tile.isEmpty) continue;
-                    switch (y)
-                    {
-                        case 4:
-                            continue;
-                        case 0 when bottomTile.isEmpty:
-                            bottomTile.Item = ItemDatabase.items[Random.Range(0, ItemDatabase.items.Length)];
-                            var deflateSequence = DOTween.Sequence();
-                            deflateSequence.Join(bottomTile.icon.transform.DOScale(Vector3.zero, tweenDuration));
-                            await deflateSequence.Play().AsyncWaitForCompletion();
-                            bottomTile.isEmpty = false;
-                            tile.isEmpty = true;
-                            await Swap(tile, bottomTile);
-                            break;
-                    }
 
-                    if (bottomTile.isEmpty)
+                    var lowestEmptyTileBelow = FindLowestEmptyTileBelow(x, y);
+
+                    if (lowestEmptyTileBelow != null && lowestEmptyTileBelow != tile)
                     {
-                        bottomTile.isEmpty = false;
+                        lowestEmptyTileBelow.isEmpty = false;
                         tile.isEmpty = true;
-                        await Swap(tile, bottomTile);
+
+                        tasks.Add(Swap(tile, lowestEmptyTileBelow));
+                        moved = true;
                     }
                 }
             }
 
+            await Task.WhenAll(tasks);
+
             await SpawnNewTiles();
-            if (IsThereEmptyTile())
-            {
-                continue;
-            }
 
-            if (CanPop())
+            if (!moved && !IsThereEmptyTile())
             {
-                Pop();
-            }
+                if (CanPop())
+                {
+                    Pop();
+                }
 
-            break;
+                break;
+            }
         }
     }
+
+    private Tile FindLowestEmptyTileBelow(int x, int startY)
+    {
+        bool emptyTileFound = false;
+        int emptyTileCount = 0;
+        Tile firstEmptyTile = null;
+        Tile lowestEmptyTile = null;
+
+        for (int y = startY + 1; y < height; y++)
+        {
+            if (!tiles[x, y].isEmpty) break;
+
+            if (tiles[x, y].isEmpty)
+            {
+                if (emptyTileFound == false)
+                {
+                    emptyTileFound = true;
+                    emptyTileCount++;
+                    firstEmptyTile = tiles[x, y];
+                    lowestEmptyTile = tiles[x, y];
+                }
+                else
+                {
+                    emptyTileCount++;
+                    lowestEmptyTile = tiles[x, y];
+                }
+            }
+        }
+
+        if (emptyTileCount > 1)
+        {
+            return lowestEmptyTile;
+        }
+
+        return firstEmptyTile;
+    }
+
 
     private async Task SpawnNewTiles()
     {
@@ -239,6 +269,6 @@ public sealed class Board : MonoBehaviour
             }
         }
 
-        await DropUpperTiles();
+        DropUpperTiles();
     }
 }
