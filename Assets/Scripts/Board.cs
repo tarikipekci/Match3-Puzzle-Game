@@ -12,6 +12,7 @@ public sealed class Board : MonoBehaviour
 
     [SerializeField] private AudioClip popUpSound;
     [SerializeField] private AudioSource audioSource;
+    private AudioManager audioManager;
 
     public Row[] rows;
     public Tile[,] tiles { get; private set; }
@@ -41,6 +42,8 @@ public sealed class Board : MonoBehaviour
                 tiles[x, y] = tile;
             }
         }
+
+        audioManager = FindObjectOfType<AudioManager>();
     }
 
     private async void DropUpperTiles()
@@ -256,7 +259,10 @@ public sealed class Board : MonoBehaviour
 
                 await deflateSequence.Play().AsyncWaitForCompletion();
 
-                audioSource.PlayOneShot(popUpSound);
+                if (audioManager != null)
+                {
+                    audioManager.soundEffects[0].Play();
+                }
                 ScoreCounter.Instance.Score += tile.Item.value * connectedTiles.Count;
 
                 foreach (var connectedTile in connectedTiles)
