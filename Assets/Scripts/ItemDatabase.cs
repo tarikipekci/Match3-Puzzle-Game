@@ -1,12 +1,8 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public static class ItemDatabase
+public class ItemDatabase : MonoBehaviour
 {
-    public static Item[] items { get; private set; }
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    private static void Init()
-    {
-        items = Resources.LoadAll<Item>("Items/");
-    }
+    [SerializeField]
+    public List<ItemDictionaryEntry> itemDictionary = new List<ItemDictionaryEntry>();
 }

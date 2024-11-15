@@ -4,15 +4,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
 
 public sealed class Board : MonoBehaviour
 {
     public static Board Instance { get; private set; }
-
-    [SerializeField] private AudioClip popUpSound;
-    [SerializeField] private AudioSource audioSource;
     private AudioManager audioManager;
+    private ItemDatabase itemDatabase;
+    Item[] currentLevelItems = new Item[] { };
 
     public Row[] rows;
     public Tile[,] tiles { get; private set; }
@@ -27,7 +27,16 @@ public sealed class Board : MonoBehaviour
 
     private void Start()
     {
+        itemDatabase = FindObjectOfType<ItemDatabase>();
         tiles = new Tile[rows.Max(row => row.tiles.Length), rows.Length];
+        
+        foreach (var currentItem in itemDatabase.itemDictionary)
+        {
+            if (currentItem.key == SceneManager.GetActiveScene().name)
+            {
+                currentLevelItems = currentItem.value;
+            }
+        }
 
         for (var y = 0; y < height; y++)
         {
@@ -38,7 +47,8 @@ public sealed class Board : MonoBehaviour
                 tile.x = x;
                 tile.y = y;
 
-                tile.Item = ItemDatabase.items[Random.Range(0, ItemDatabase.items.Length)];
+                tile.Item = currentLevelItems[Random.Range(0, currentLevelItems.Length)];
+                    
                 tiles[x, y] = tile;
             }
         }
@@ -133,7 +143,7 @@ public sealed class Board : MonoBehaviour
             var tile = tiles[x, 0];
             if (tile.isEmpty)
             {
-                tile.Item = ItemDatabase.items[Random.Range(0, ItemDatabase.items.Length)];
+                tile.Item = currentLevelItems[Random.Range(0, currentLevelItems.Length)];
                 var inflateSequence = DOTween.Sequence();
                 inflateSequence.Join(tile.icon.transform.DOScale(Vector3.one, tweenDuration));
                 await inflateSequence.Play().AsyncWaitForCompletion();
@@ -267,7 +277,7 @@ public sealed class Board : MonoBehaviour
 
                 foreach (var connectedTile in connectedTiles)
                 {
-                    connectedTile.Item = ItemDatabase.items[Random.Range(0, ItemDatabase.items.Length)];
+                    connectedTile.Item = currentLevelItems[Random.Range(0, currentLevelItems.Length)];
                 }
 
                 x = 0;
