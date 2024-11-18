@@ -13,7 +13,7 @@ public class Settings : MonoBehaviour
 
     private void Awake()
     {
-        Application.targetFrameRate = 60;
+        Application.targetFrameRate = 90;
         audioManager = GameObject.Find("AudioManager").GetComponent<AudioManager>();
         generalSoundSlider.value = PlayerPrefsBehaviour.GetGeneralSound();
         ambientSoundSlider.value = PlayerPrefsBehaviour.GetAmbientSound();

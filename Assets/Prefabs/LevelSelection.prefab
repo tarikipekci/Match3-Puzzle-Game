@@ -49,7 +49,6 @@ GameObject:
   - component: {fileID: 7632423292322547968}
   - component: {fileID: 4043283992770825816}
   - component: {fileID: 3816863629397701417}
-  - component: {fileID: 5697306885704098777}
   m_Layer: 5
   m_Name: LevelSelectionPanel
   m_TagString: Untagged
@@ -140,18 +139,6 @@ MonoBehaviour:
   m_Spacing: {x: 20, y: 20}
   m_Constraint: 0
   m_ConstraintCount: 2
---- !u!114 &5697306885704098777
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1082857300727593335}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 234b7384d22492845925980966054093, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &7210321090087371040
 GameObject:
   m_ObjectHideFlags: 0
@@ -476,10 +463,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Level
       objectReference: {fileID: 0}
-    - target: {fileID: 8635892623548917355, guid: 79494a8af2140954eaa78a28cdb8fe59, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 5697306885704098777}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

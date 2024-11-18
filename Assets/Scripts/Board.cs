@@ -13,6 +13,8 @@ public sealed class Board : MonoBehaviour
     private AudioManager audioManager;
     private ItemDatabase itemDatabase;
     Item[] currentLevelItems = new Item[] { };
+    Item[] specialItems = new Item[] { };
+    LevelManager levelManager;
 
     public Row[] rows;
     public Tile[,] tiles { get; private set; }
@@ -20,9 +22,10 @@ public sealed class Board : MonoBehaviour
     public int width => tiles.GetLength(0);
     public int height => tiles.GetLength(1);
 
-    private const float tweenDuration = 0.2f;
+    public float tweenDuration = 0.2f;
+    private const float specialItemPossibility = 0.1f;
 
-    private readonly List<Tile> _selection = new();
+    private List<Tile> _selection = new List<Tile> { };
     private void Awake() => Instance = this;
 
     private void Start()
@@ -35,6 +38,10 @@ public sealed class Board : MonoBehaviour
             if (currentItem.key == SceneManager.GetActiveScene().name)
             {
                 currentLevelItems = currentItem.value;
+            }
+            else if (currentItem.key == "SpecialItems")
+            {
+                specialItems = currentItem.value;
             }
         }
 
@@ -54,6 +61,7 @@ public sealed class Board : MonoBehaviour
         }
 
         audioManager = FindObjectOfType<AudioManager>();
+        levelManager = FindObjectOfType<LevelManager>();
     }
 
     private async void DropUpperTiles()
@@ -89,9 +97,13 @@ public sealed class Board : MonoBehaviour
 
             if (!moved && !IsThereEmptyTile())
             {
-                if (CanPop())
+                if (CanPopHorizontal())
                 {
-                    Pop();
+                    StartPop(false);
+                }
+                else if (CanPopVertical())
+                {
+                    StartPop(true);
                 }
 
                 break;
@@ -143,11 +155,22 @@ public sealed class Board : MonoBehaviour
             var tile = tiles[x, 0];
             if (tile.isEmpty)
             {
-                tile.Item = currentLevelItems[Random.Range(0, currentLevelItems.Length)];
-                var inflateSequence = DOTween.Sequence();
-                inflateSequence.Join(tile.icon.transform.DOScale(Vector3.one, tweenDuration));
-                await inflateSequence.Play().AsyncWaitForCompletion();
-                tile.isEmpty = false;
+                if (Random.Range(0f, 1f) <= specialItemPossibility)
+                {
+                    tile.Item = specialItems[0];
+                    tile.isEmpty = false;
+                    var inflateSpecialItem = DOTween.Sequence();
+                    inflateSpecialItem.Join(tile.icon.transform.DOScale(Vector3.one, tweenDuration));
+                    await inflateSpecialItem.Play().AsyncWaitForCompletion();
+                }
+                else
+                {
+                    tile.Item = currentLevelItems[Random.Range(0, currentLevelItems.Length)];
+                    var inflateSequence = DOTween.Sequence();
+                    inflateSequence.Join(tile.icon.transform.DOScale(Vector3.one, tweenDuration));
+                    await inflateSequence.Play().AsyncWaitForCompletion();
+                    tile.isEmpty = false;   
+                }
             }
         }
     }
@@ -199,9 +222,13 @@ public sealed class Board : MonoBehaviour
 
         await Swap(_selection[0], _selection[1]);
 
-        if (CanPop())
+        if (CanPopHorizontal())
         {
-            Pop();
+            StartPop(false);
+        }
+        else if (CanPopVertical())
+        {
+            StartPop(true);
         }
         else
         {
@@ -237,7 +264,19 @@ public sealed class Board : MonoBehaviour
         tile2.Item = tile1Item;
     }
 
-    private bool CanPop()
+    private bool CanPopVertical()
+    {
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+                if (tiles[x, y].GetConnectedTiles(true).Skip(1).Count() >= 2)
+                    return true;
+        }
+
+        return false;
+    }
+    
+    private bool CanPopHorizontal()
     {
         for (var y = 0; y < height; y++)
         {
@@ -249,36 +288,14 @@ public sealed class Board : MonoBehaviour
         return false;
     }
 
-    private async void Pop()
+    private async void StartPop(bool isVertical)
     {
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
             {
                 var tile = tiles[x, y];
-                var connectedTiles = tile.GetConnectedTiles();
-                if (connectedTiles.Skip(1).Count() < 2) continue;
-
-                var deflateSequence = DOTween.Sequence();
-
-                foreach (var connectedTile in connectedTiles)
-                {
-                    deflateSequence.Join(connectedTile.icon.transform.DOScale(Vector3.zero, tweenDuration));
-                    connectedTile.isEmpty = true;
-                }
-
-                await deflateSequence.Play().AsyncWaitForCompletion();
-
-                if (audioManager != null)
-                {
-                    audioManager.soundEffects[0].Play();
-                }
-                ScoreCounter.Instance.Score += tile.Item.value * connectedTiles.Count;
-
-                foreach (var connectedTile in connectedTiles)
-                {
-                    connectedTile.Item = currentLevelItems[Random.Range(0, currentLevelItems.Length)];
-                }
+                if (await Pop(tile, isVertical)) continue;
 
                 x = 0;
                 y = 0;
@@ -286,5 +303,75 @@ public sealed class Board : MonoBehaviour
         }
 
         DropUpperTiles();
+    }
+
+    private async Task<bool> Pop(Tile tile, bool isVertical)
+    {
+        var connectedTiles = tile.GetConnectedTiles(isVertical);
+        if (connectedTiles.Skip(1).Count() < 2) return true;
+
+        var deflateSequence = DOTween.Sequence();
+
+        foreach (var connectedTile in connectedTiles)
+        {
+            deflateSequence.Join(connectedTile.icon.transform.DOScale(Vector3.zero, tweenDuration));
+            if (levelManager.levelTarget.targetItem.Contains(connectedTile.Item))
+            {
+                var targetIndex = Array.IndexOf(levelManager.levelTarget.targetItem, connectedTile.Item);
+                if (targetIndex >= 0)
+                {
+                    if (levelManager.levelTarget.targetAmount[targetIndex] > 0)
+                    {
+                        levelManager.levelTarget.targetAmount[targetIndex]--;
+                        var currentAmount = levelManager.levelTarget.targetAmount[targetIndex];
+                        levelManager.targetAmounts[targetIndex].text = currentAmount.ToString();
+                    }
+
+                    if (HasTargetReached())
+                    {
+                        levelManager.victoryPanel.SetActive(true);
+                        var inflateSequence = DOTween.Sequence();
+                        inflateSequence.Join(levelManager.victoryPanel.transform.DOScale(Vector3.one, tweenDuration));
+                        await inflateSequence.Play().AsyncWaitForCompletion();
+                    }
+                }
+            }
+
+            connectedTile.isEmpty = true;
+
+            if (connectedTile.Item is SpecialItem specialItem)
+            {
+                specialItem.UseSpecialItem(connectedTile);
+            }
+        }
+
+        await deflateSequence.Play().AsyncWaitForCompletion();
+
+        if (audioManager != null)
+        {
+            audioManager.soundEffects[0].Play();
+        }
+
+        ScoreCounter.Instance.Score += tile.Item.value * connectedTiles.Count;
+
+        foreach (var connectedTile in connectedTiles)
+        {
+            connectedTile.Item = currentLevelItems[Random.Range(0, currentLevelItems.Length)];
+        }
+
+        return false;
+    }
+
+    private bool HasTargetReached()
+    {
+        foreach (var amount in levelManager.levelTarget.targetAmount)
+        {
+            if (amount > 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

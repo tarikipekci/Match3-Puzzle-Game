@@ -12,6 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe3faee460c01514893fc8420dd7c2dc, type: 3}
   m_Name: Dynamite
   m_EditorClassIdentifier: 
-  value: 0
+  value: 100
   sprite: {fileID: 21300000, guid: 3ca9c2918c35c9a4bb7bef3ed440d53d, type: 3}
-  radius: 0

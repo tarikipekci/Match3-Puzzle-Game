@@ -46,13 +46,32 @@ public sealed class Tile : MonoBehaviour
         button.onClick.AddListener(() => Board.Instance.Select(this));
     }
 
-    public List<Tile> GetConnectedTiles(List<Tile> exclude = null)
+    bool CanMatch(Tile tile1, Tile tile2, Tile anchorTile)
     {
-        var result = new List<Tile> { this, };
+        if (anchorTile == null) return false;
+
+        if (tile1.Item is SpecialItem || tile2.Item is SpecialItem)
+        {
+            var nonSpecialTile = tile1.Item is SpecialItem ? tile2 : tile1;
+            return nonSpecialTile.Item == anchorTile.Item;
+        }
+
+        return tile1.Item == tile2.Item;
+    }
+
+    
+    public List<Tile> GetConnectedTiles(bool isVertical = false, List<Tile> exclude = null, Tile anchorTile = null)
+    {
+        var result = new List<Tile> { this };
+
+        if (anchorTile == null)
+        {
+            anchorTile = Item is SpecialItem == false ? this : null;
+        }
 
         if (exclude == null)
         {
-            exclude = new List<Tile> { this, };
+            exclude = new List<Tile> { this };
         }
         else
         {
@@ -61,11 +80,30 @@ public sealed class Tile : MonoBehaviour
 
         foreach (var neighbour in Neighbours)
         {
-            if (neighbour == null || exclude.Contains(neighbour) || neighbour.Item != Item || isEmpty) continue;
-            
-            result.AddRange(neighbour.GetConnectedTiles(exclude));
+            if (neighbour == null || exclude.Contains(neighbour) || isEmpty) continue;
+
+            if (anchorTile == null && neighbour.Item is SpecialItem == false)
+            {
+                anchorTile = neighbour;
+            }
+
+            if (anchorTile == null || !CanMatch(this, neighbour, anchorTile)) continue;
+
+            if (isVertical)
+            {
+                if (neighbour.x == x)
+                {
+                    result.AddRange(neighbour.GetConnectedTiles(true, exclude, anchorTile));
+                }
+            }
+            else
+            {
+                if (neighbour.y == y)
+                {
+                    result.AddRange(neighbour.GetConnectedTiles(false, exclude, anchorTile));
+                }
+            }
         }
-        
         return result;
     }
 }
