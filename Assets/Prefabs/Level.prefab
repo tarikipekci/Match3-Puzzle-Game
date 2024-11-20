@@ -109,7 +109,6 @@ GameObject:
   - component: {fileID: 4117101869995712598}
   - component: {fileID: 7161609048453198778}
   - component: {fileID: 8635892623548917355}
-  - component: {fileID: 7727660134394600525}
   m_Layer: 5
   m_Name: Level
   m_TagString: Untagged
@@ -224,24 +223,10 @@ MonoBehaviour:
         m_MethodName: SelectLevel
         m_Mode: 2
         m_Arguments:
-          m_ObjectArgument: {fileID: 7727660134394600525}
+          m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: Level, Assembly-CSharp
           m_IntArgument: 1
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &7727660134394600525
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4166293827213395963}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e42b9f0abd5b4ba40b196be3bc6acea1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  value: 1
-  isCompleted: 0

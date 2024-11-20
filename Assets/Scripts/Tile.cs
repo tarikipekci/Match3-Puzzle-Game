@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public sealed class Tile : MonoBehaviour
+public sealed class Tile : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public int x;
     public int y;
+    private Vector3 startPosition;
 
     private Item _item;
 
@@ -24,12 +26,11 @@ public sealed class Tile : MonoBehaviour
     }
 
     public bool isEmpty;
-    
+
     public Image icon;
-    public Button button;
 
     private Tile Left => x > 0 ? Board.Instance.tiles[x - 1, y] : null;
-    private Tile Top => y > 0 ? Board.Instance.tiles[x , y - 1] : null;
+    private Tile Top => y > 0 ? Board.Instance.tiles[x, y - 1] : null;
     private Tile Right => x < Board.Instance.width - 1 ? Board.Instance.tiles[x + 1, y] : null;
     private Tile Bottom => y < Board.Instance.height - 1 ? Board.Instance.tiles[x, y + 1] : null;
 
@@ -40,11 +41,6 @@ public sealed class Tile : MonoBehaviour
         Right,
         Bottom
     };
-
-    private void Start()
-    {
-        button.onClick.AddListener(() => Board.Instance.Select(this));
-    }
 
     bool CanMatch(Tile tile1, Tile tile2, Tile anchorTile)
     {
@@ -59,7 +55,7 @@ public sealed class Tile : MonoBehaviour
         return tile1.Item == tile2.Item;
     }
 
-    
+
     public List<Tile> GetConnectedTiles(bool isVertical = false, List<Tile> exclude = null, Tile anchorTile = null)
     {
         var result = new List<Tile> { this };
@@ -104,6 +100,49 @@ public sealed class Tile : MonoBehaviour
                 }
             }
         }
+
         return result;
+    }
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        startPosition = eventData.position;
+        Board.Instance.Select(this);
+    }
+    
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        var draggedObject = eventData.pointerDrag.gameObject;
+        Tile draggedTile = draggedObject.GetComponent<Tile>();
+        Vector3 endPosition = eventData.position;
+        var direction = (endPosition - startPosition).normalized;
+
+        const float threshold = 0.5f;
+
+        if (direction.y > threshold)
+        {
+            Board.Instance.Select(draggedTile.Neighbours[1]);
+        }
+        else if (direction.y < -threshold)
+        {
+            Board.Instance.Select(draggedTile.Neighbours[3]);
+        }
+        else if (direction.x > threshold)
+        {
+            Board.Instance.Select(draggedTile.Neighbours[2]);
+        }
+        else if (direction.x < -threshold)
+        {
+            Board.Instance.Select(draggedTile.Neighbours[0]);
+        }
+        else
+        {
+            Debug.Log("Invalid Direction");
+        }
+    }
+    
+    public void OnDrag(PointerEventData eventData)
+    {
+
     }
 }

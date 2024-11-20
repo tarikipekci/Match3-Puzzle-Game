@@ -5,6 +5,7 @@ public static class PlayerPrefsBehaviour
     public static float generalSoundLevel;
     public static float musicSoundLevel;
     public static float ambientSoundLevel;
+    public static int currentLevelValue;
     
     public static void SetGeneralSound(float general)
     {
@@ -34,5 +35,15 @@ public static class PlayerPrefsBehaviour
     public static float GetAmbientSound()
     {
         return PlayerPrefs.GetFloat("ambientSoundLevel");
+    }
+    
+    public static void SetCurrentLevelValue(int value)
+    {
+        PlayerPrefs.SetInt("currentLevelValue", value);
+    }
+
+    public static int GetCurrentLevelValue()
+    {
+        return PlayerPrefs.GetInt("currentLevelValue");
     }
 }

@@ -15,6 +15,7 @@ public sealed class Board : MonoBehaviour
     Item[] currentLevelItems = new Item[] { };
     Item[] specialItems = new Item[] { };
     LevelManager levelManager;
+    public LevelStates levelStates;
 
     public Row[] rows;
     public Tile[,] tiles { get; private set; }
@@ -330,6 +331,7 @@ public sealed class Board : MonoBehaviour
                     if (HasTargetReached())
                     {
                         levelManager.victoryPanel.SetActive(true);
+                        levelStates.levels[PlayerPrefsBehaviour.GetCurrentLevelValue() - 1].isCompleted = true;
                         var inflateSequence = DOTween.Sequence();
                         inflateSequence.Join(levelManager.victoryPanel.transform.DOScale(Vector3.one, tweenDuration));
                         await inflateSequence.Play().AsyncWaitForCompletion();

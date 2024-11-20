@@ -1,6 +1,7 @@
 using UnityEngine;
 
-public class Level : MonoBehaviour
+[CreateAssetMenu(menuName = "Match3/Level")]
+public class Level : ScriptableObject
 {
     public int value;
 

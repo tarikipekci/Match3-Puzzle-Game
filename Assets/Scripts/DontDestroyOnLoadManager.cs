@@ -9,7 +9,7 @@ public class DontDestroyOnLoadManager : MonoBehaviour
         {
             if (obj != this && obj.name == name)
             {
-                Destroy(gameObject); 
+                Destroy(obj); 
                 return;
             }
         }
