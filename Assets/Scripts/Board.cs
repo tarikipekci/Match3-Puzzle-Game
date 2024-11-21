@@ -64,7 +64,7 @@ public sealed class Board : MonoBehaviour
         audioManager = FindObjectOfType<AudioManager>();
         levelManager = FindObjectOfType<LevelManager>();
     }
-
+    
     private async void DropUpperTiles()
     {
         while (true)
@@ -149,8 +149,17 @@ public sealed class Board : MonoBehaviour
     }
 
 
-    private async Task SpawnNewTiles()
+    private async Task SpawnNewTiles(int retryCount = 0)
     {
+        List<Tile> targetTiles = new List<Tile>();
+        const int maxRetries = 15;
+        if (retryCount > maxRetries)
+        {
+            FillEmptyTiles(targetTiles);
+            Debug.Log("Added tiles manually");
+            return;
+        }
+
         for (var x = 0; x < height; x++)
         {
             var tile = tiles[x, 0];
@@ -159,23 +168,84 @@ public sealed class Board : MonoBehaviour
                 if (Random.Range(0f, 1f) <= specialItemPossibility)
                 {
                     tile.Item = specialItems[0];
-                    tile.isEmpty = false;
-                    var inflateSpecialItem = DOTween.Sequence();
-                    inflateSpecialItem.Join(tile.icon.transform.DOScale(Vector3.one, tweenDuration));
-                    await inflateSpecialItem.Play().AsyncWaitForCompletion();
                 }
                 else
                 {
                     tile.Item = currentLevelItems[Random.Range(0, currentLevelItems.Length)];
-                    var inflateSequence = DOTween.Sequence();
-                    inflateSequence.Join(tile.icon.transform.DOScale(Vector3.one, tweenDuration));
-                    await inflateSequence.Play().AsyncWaitForCompletion();
-                    tile.isEmpty = false;   
                 }
+
+                tile.isEmpty = false;
+                targetTiles.Add(tile);
+            }
+        }
+
+        if (!CheckIsThereAnyPossibleMatch())
+        {
+            foreach (var targetTile in targetTiles)
+            {
+                targetTile.isEmpty = true;
+            }
+            await SpawnNewTiles(retryCount + 1); 
+        }
+        else
+        {
+            foreach (var targetTile in targetTiles)
+            {
+                var inflateItem = DOTween.Sequence();
+                inflateItem.Join(targetTile.icon.transform.DOScale(Vector3.one, tweenDuration));
+                await inflateItem.Play().AsyncWaitForCompletion();
+                targetTile.isEmpty = false;
             }
         }
     }
 
+    private async void FillEmptyTiles(List<Tile> targetTiles)
+    {
+        var randomItem = currentLevelItems[Random.Range(0, currentLevelItems.Length)];
+        foreach (var tile in targetTiles)
+        {
+            tile.Item = randomItem;
+            var inflateItem = DOTween.Sequence();
+            inflateItem.Join(tile.icon.transform.DOScale(Vector3.one, tweenDuration));
+            await inflateItem.Play().AsyncWaitForCompletion();
+            tile.isEmpty = false;
+        }
+    }
+    
+    private bool CheckIsThereAnyPossibleMatch()
+    {
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var currentTile = tiles[x, y];
+
+                foreach (var tile in currentTile.Neighbours)
+                {
+                    if (tile)
+                    {
+                        var oldItem1 = currentTile.Item;
+                        var oldItem2 = tile.Item;
+                        var currentTileItem = currentTile.Item;
+                        currentTile.Item = tile.Item;
+                        tile.Item = currentTileItem;
+                        if (CanPopHorizontal() || CanPopVertical())
+                        {
+                            currentTile.Item = oldItem1;
+                            tile.Item = oldItem2;
+                            return true;
+                        }
+
+                        currentTile.Item = oldItem1;
+                        tile.Item = oldItem2;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+    
     private bool IsThereEmptyTile()
     {
         for (var y = 0; y < height; y++)
