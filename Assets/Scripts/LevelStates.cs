@@ -34,6 +34,11 @@ public class LevelStates : MonoBehaviour
         }
     }
 
+    public void LoadSameLevel()
+    {
+        SceneManager.LoadScene("Level" + PlayerPrefsBehaviour.GetCurrentLevelValue());
+    }
+
     public void SelectLevel(Level level)
     {
         var levelIndex = Array.IndexOf(levels, level);

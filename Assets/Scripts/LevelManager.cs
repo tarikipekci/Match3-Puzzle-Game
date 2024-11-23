@@ -9,7 +9,11 @@ public class LevelManager : MonoBehaviour
     public Text[] targetAmounts;
 
     public GameObject victoryPanel;
-    
+    public GameObject failPanel;
+    public Text moveCountText;
+    public int numberOfMoves;
+    public bool levelFinished;
+
     private void Awake()
     {
         for (int i = 0; i < levelTarget.targetAmount.Length; i++)
@@ -23,6 +27,28 @@ public class LevelManager : MonoBehaviour
     {
         var deflateSequence = DOTween.Sequence();
         deflateSequence.Join(victoryPanel.transform.DOScale(Vector3.zero, 0));
+        deflateSequence.Join(failPanel.transform.DOScale(Vector3.zero, 0));
         await deflateSequence.Play().AsyncWaitForCompletion();
+    }
+
+    private async void OpenFailPanel()
+    {
+        failPanel.SetActive(true);
+        var inflateSequence = DOTween.Sequence();
+        inflateSequence.Join(failPanel.transform.DOScale(Vector3.one, Board.Instance.tweenDuration));
+        await inflateSequence.Play().AsyncWaitForCompletion();
+    }
+
+    public void UpdateMoveCount()
+    {
+        moveCountText.text = "Moves: " + numberOfMoves;
+
+        if (numberOfMoves <= 0)
+        {
+            if (levelFinished == false)
+            {
+                OpenFailPanel();
+            }
+        }
     }
 }

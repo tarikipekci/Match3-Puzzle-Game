@@ -46,9 +46,9 @@ public sealed class Tile : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     {
         if (anchorTile == null) return false;
 
-        if (tile1.Item is SpecialItem || tile2.Item is SpecialItem)
+        if (tile1.Item is ISpecialItem || tile2.Item is ISpecialItem)
         {
-            var nonSpecialTile = tile1.Item is SpecialItem ? tile2 : tile1;
+            var nonSpecialTile = tile1.Item is ISpecialItem ? tile2 : tile1;
             return nonSpecialTile.Item == anchorTile.Item;
         }
 
@@ -62,7 +62,7 @@ public sealed class Tile : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
         if (anchorTile == null)
         {
-            anchorTile = Item is SpecialItem == false ? this : null;
+            anchorTile = Item is ISpecialItem == false ? this : null;
         }
 
         if (exclude == null)
@@ -78,7 +78,7 @@ public sealed class Tile : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         {
             if (neighbour == null || exclude.Contains(neighbour) || isEmpty) continue;
 
-            if (anchorTile == null && neighbour.Item is SpecialItem == false)
+            if (anchorTile == null && neighbour.Item is ISpecialItem == false)
             {
                 anchorTile = neighbour;
             }

@@ -11,7 +11,7 @@ public sealed class Board : MonoBehaviour
 {
     public static Board Instance { get; private set; }
     private AudioManager audioManager;
-    private ItemDatabase itemDatabase;
+    public ItemDatabase itemDatabase;
     Item[] currentLevelItems = new Item[] { };
     Item[] specialItems = new Item[] { };
     LevelManager levelManager;
@@ -33,7 +33,7 @@ public sealed class Board : MonoBehaviour
     {
         itemDatabase = FindObjectOfType<ItemDatabase>();
         tiles = new Tile[rows.Max(row => row.tiles.Length), rows.Length];
-        
+
         foreach (var currentItem in itemDatabase.itemDictionary)
         {
             if (currentItem.key == SceneManager.GetActiveScene().name)
@@ -56,15 +56,16 @@ public sealed class Board : MonoBehaviour
                 tile.y = y;
 
                 tile.Item = currentLevelItems[Random.Range(0, currentLevelItems.Length)];
-                    
+
                 tiles[x, y] = tile;
             }
         }
 
         audioManager = FindObjectOfType<AudioManager>();
         levelManager = FindObjectOfType<LevelManager>();
+        levelManager.UpdateMoveCount();
     }
-    
+
     private async void DropUpperTiles()
     {
         while (true)
@@ -147,12 +148,11 @@ public sealed class Board : MonoBehaviour
 
         return firstEmptyTile;
     }
-
-
+    
     private async Task SpawnNewTiles(int retryCount = 0)
     {
         List<Tile> targetTiles = new List<Tile>();
-        const int maxRetries = 15;
+        const int maxRetries = 8;
         if (retryCount > maxRetries)
         {
             FillEmptyTiles(targetTiles);
@@ -167,7 +167,7 @@ public sealed class Board : MonoBehaviour
             {
                 if (Random.Range(0f, 1f) <= specialItemPossibility)
                 {
-                    tile.Item = specialItems[0];
+                    tile.Item = specialItems[Random.Range(0, specialItems.Length)];
                 }
                 else
                 {
@@ -185,7 +185,8 @@ public sealed class Board : MonoBehaviour
             {
                 targetTile.isEmpty = true;
             }
-            await SpawnNewTiles(retryCount + 1); 
+
+            await SpawnNewTiles(retryCount + 1);
         }
         else
         {
@@ -211,7 +212,7 @@ public sealed class Board : MonoBehaviour
             tile.isEmpty = false;
         }
     }
-    
+
     private bool CheckIsThereAnyPossibleMatch()
     {
         for (var y = 0; y < height; y++)
@@ -245,7 +246,7 @@ public sealed class Board : MonoBehaviour
 
         return false;
     }
-    
+
     private bool IsThereEmptyTile()
     {
         for (var y = 0; y < height; y++)
@@ -296,10 +297,14 @@ public sealed class Board : MonoBehaviour
         if (CanPopHorizontal())
         {
             StartPop(false);
+            levelManager.numberOfMoves--;
+            levelManager.UpdateMoveCount();
         }
         else if (CanPopVertical())
         {
             StartPop(true);
+            levelManager.numberOfMoves--;
+            levelManager.UpdateMoveCount();
         }
         else
         {
@@ -340,19 +345,19 @@ public sealed class Board : MonoBehaviour
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
-                if (tiles[x, y].GetConnectedTiles(true).Skip(1).Count() >= 2)
+                if (tiles[x, y].GetConnectedTiles(true).Skip(1).Count() >= 2 && levelManager.levelFinished == false)
                     return true;
         }
 
         return false;
     }
-    
+
     private bool CanPopHorizontal()
     {
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
-                if (tiles[x, y].GetConnectedTiles().Skip(1).Count() >= 2)
+                if (tiles[x, y].GetConnectedTiles().Skip(1).Count() >= 2 && levelManager.levelFinished == false)
                     return true;
         }
 
@@ -386,34 +391,13 @@ public sealed class Board : MonoBehaviour
         foreach (var connectedTile in connectedTiles)
         {
             deflateSequence.Join(connectedTile.icon.transform.DOScale(Vector3.zero, tweenDuration));
-            if (levelManager.levelTarget.targetItem.Contains(connectedTile.Item))
-            {
-                var targetIndex = Array.IndexOf(levelManager.levelTarget.targetItem, connectedTile.Item);
-                if (targetIndex >= 0)
-                {
-                    if (levelManager.levelTarget.targetAmount[targetIndex] > 0)
-                    {
-                        levelManager.levelTarget.targetAmount[targetIndex]--;
-                        var currentAmount = levelManager.levelTarget.targetAmount[targetIndex];
-                        levelManager.targetAmounts[targetIndex].text = currentAmount.ToString();
-                    }
-
-                    if (HasTargetReached())
-                    {
-                        levelManager.victoryPanel.SetActive(true);
-                        levelStates.levels[PlayerPrefsBehaviour.GetCurrentLevelValue() - 1].isCompleted = true;
-                        var inflateSequence = DOTween.Sequence();
-                        inflateSequence.Join(levelManager.victoryPanel.transform.DOScale(Vector3.one, tweenDuration));
-                        await inflateSequence.Play().AsyncWaitForCompletion();
-                    }
-                }
-            }
+            await UpdateGoal(connectedTile);
 
             connectedTile.isEmpty = true;
 
-            if (connectedTile.Item is SpecialItem specialItem)
+            if (connectedTile.Item is ISpecialItem specialItem)
             {
-                specialItem.UseSpecialItem(connectedTile);
+                specialItem.ExecuteSpecialItem(connectedTile);
             }
         }
 
@@ -434,6 +418,32 @@ public sealed class Board : MonoBehaviour
         return false;
     }
 
+    public async Task UpdateGoal(Tile connectedTile)
+    {
+        if (levelManager.levelTarget.targetItem.Contains(connectedTile.Item))
+        {
+            var targetIndex = Array.IndexOf(levelManager.levelTarget.targetItem, connectedTile.Item);
+            if (targetIndex >= 0)
+            {
+                if (levelManager.levelTarget.targetAmount[targetIndex] > 0)
+                {
+                    levelManager.levelTarget.targetAmount[targetIndex]--;
+                    var currentAmount = levelManager.levelTarget.targetAmount[targetIndex];
+                    levelManager.targetAmounts[targetIndex].text = currentAmount.ToString();
+                }
+
+                if (HasTargetReached())
+                {
+                    levelManager.victoryPanel.SetActive(true);
+                    levelStates.levels[PlayerPrefsBehaviour.GetCurrentLevelValue() - 1].isCompleted = true;
+                    var inflateSequence = DOTween.Sequence();
+                    inflateSequence.Join(levelManager.victoryPanel.transform.DOScale(Vector3.one, tweenDuration));
+                    await inflateSequence.Play().AsyncWaitForCompletion();
+                }
+            }
+        }
+    }
+
     private bool HasTargetReached()
     {
         foreach (var amount in levelManager.levelTarget.targetAmount)
@@ -443,7 +453,7 @@ public sealed class Board : MonoBehaviour
                 return false;
             }
         }
-
+        levelManager.levelFinished = true;
         return true;
     }
 }

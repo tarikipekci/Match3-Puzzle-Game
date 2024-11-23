@@ -1595,7 +1595,8 @@ MonoBehaviour:
   itemDictionary:
   - key: SpecialItems
     value:
-    - {fileID: 11400000, guid: 2709f5a8da11d9242ae6ce045e447e85, type: 2}
+    - {fileID: 11400000, guid: b187ecab3aef1e9438253d43730466fc, type: 2}
+    - {fileID: 11400000, guid: 0822bc6150abd3445bd574084bebb6ab, type: 2}
   - key: Level1
     value:
     - {fileID: 11400000, guid: 684d077f2a1e00548b382d8b6fbda34b, type: 2}
