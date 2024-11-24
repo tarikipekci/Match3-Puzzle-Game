@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 6988558275461158864}
   - component: {fileID: 8605758279256420272}
   - component: {fileID: 5462602086768399641}
-  - component: {fileID: 8830374976955507343}
   - component: {fileID: 2697644916936144875}
   m_Layer: 5
   m_Name: MoveCountText
@@ -81,19 +80,6 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: 'Moves : 0'
---- !u!114 &8830374976955507343
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 765673027849102735}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e052c5df4a29e8b489e46ef8701faceb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  scoreText: {fileID: 5462602086768399641}
 --- !u!114 &2697644916936144875
 MonoBehaviour:
   m_ObjectHideFlags: 0
