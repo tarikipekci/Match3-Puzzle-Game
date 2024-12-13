@@ -16,7 +16,8 @@ namespace SpecialItems
                     if (x == tile.x || y == tile.y)
                     {
                         var currentTile = Board.Instance.tiles[x, y];
-                
+                        if (currentTile.isItObstacle) continue;
+                            
                         deflateSequence.Join(currentTile.icon.transform.DOScale(Vector3.zero, Board.Instance.tweenDuration));
 
                         currentTile.isEmpty = true;

@@ -25,6 +25,7 @@ public sealed class Board : MonoBehaviour
 
     public float tweenDuration = 0.2f;
     private const float specialItemPossibility = 0.1f;
+    private bool isThereObstacle;
 
     private List<Tile> _selection = new List<Tile> { };
     private void Awake() => Instance = this;
@@ -45,59 +46,56 @@ public sealed class Board : MonoBehaviour
                 specialItems = currentItem.value;
             }
         }
+        
+        audioManager = FindObjectOfType<AudioManager>();
+        levelManager = FindObjectOfType<LevelManager>();
+        levelManager.UpdateMoveCount();
+        InitBoard();
+        isThereObstacle = IsThereObstacle();
+    }
 
+    private void InitBoard(int retryCount = 0)
+    {
+        const int maxRetries = 10;
+        
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
             {
                 var tile = rows[y].tiles[x];
-
+                
                 tile.x = x;
                 tile.y = y;
-
-                tile.Item = currentLevelItems[Random.Range(0, currentLevelItems.Length)];
-
+                
                 tiles[x, y] = tile;
+                
+                if (tile.isItObstacle) continue;
+                tile.Item = currentLevelItems[Random.Range(0, currentLevelItems.Length)];
             }
         }
 
-        audioManager = FindObjectOfType<AudioManager>();
-        levelManager = FindObjectOfType<LevelManager>();
-        levelManager.UpdateMoveCount();
+        if (!CheckIsThereAnyPossibleMatch() && retryCount < maxRetries)
+        {
+            InitBoard(retryCount + 1);
+        }
     }
 
-    private async void DropUpperTiles()
+    private async void UpdateBoard()
     {
         while (true)
         {
-            bool moved = false;
-            var tasks = new List<Task>();
-
-            for (var x = 0; x < width; x++)
-            {
-                for (var y = 0; y < height; y++)
-                {
-                    var tile = tiles[x, y];
-                    if (tile.isEmpty) continue;
-
-                    var lowestEmptyTileBelow = FindLowestEmptyTileBelow(x, y);
-
-                    if (lowestEmptyTileBelow != null && lowestEmptyTileBelow != tile)
-                    {
-                        lowestEmptyTileBelow.isEmpty = false;
-                        tile.isEmpty = true;
-
-                        tasks.Add(Swap(tile, lowestEmptyTileBelow));
-                        moved = true;
-                    }
-                }
-            }
+            var moved = DropTile(out var tasks);
 
             await Task.WhenAll(tasks);
 
+            if (isThereObstacle)
+            {
+                SpawnNewTileBelowObstacle();
+            }
+
             await SpawnNewTiles();
 
-            if (!moved && !IsThereEmptyTile())
+            if (!moved && !IsThereDropPossibility())
             {
                 if (CanPopHorizontal())
                 {
@@ -111,6 +109,35 @@ public sealed class Board : MonoBehaviour
                 break;
             }
         }
+    }
+    
+    private bool DropTile(out List<Task> tasks)
+    {
+        bool moved = false;
+        tasks = new List<Task>();
+
+        for (var x = 0; x < width; x++)
+        {
+            for (var y = 0; y < height; y++)
+            {
+                var tile = tiles[x, y];
+                if (tile.isEmpty) continue;
+                if (tile.isItObstacle) continue;
+                    
+                var lowestEmptyTileBelow = FindLowestEmptyTileBelow(x, y);
+                    
+                if (lowestEmptyTileBelow != null && lowestEmptyTileBelow != tile)
+                {
+                    lowestEmptyTileBelow.isEmpty = false;
+                    tile.isEmpty = true;
+
+                    tasks.Add(Swap(tile, lowestEmptyTileBelow));
+                    moved = true;
+                }
+            }
+        }
+
+        return moved;
     }
 
     private Tile FindLowestEmptyTileBelow(int x, int startY)
@@ -148,118 +175,145 @@ public sealed class Board : MonoBehaviour
 
         return firstEmptyTile;
     }
-    
-    private async Task SpawnNewTiles(int retryCount = 0)
+
+    private async void SpawnNewTileBelowObstacle()
     {
-        List<Tile> targetTiles = new List<Tile>();
-        const int maxRetries = 8;
-        if (retryCount > maxRetries)
+        for (var x = 0; x < width; x++)
         {
-            FillEmptyTiles(targetTiles);
-            Debug.Log("Added tiles manually");
-            return;
-        }
-
-        for (var x = 0; x < height; x++)
-        {
-            var tile = tiles[x, 0];
-            if (tile.isEmpty)
+            for (var y = 0; y < height; y++)
             {
-                if (Random.Range(0f, 1f) <= specialItemPossibility)
+                var tile = tiles[x, y];
+                if (tile.isItObstacle)
                 {
-                    tile.Item = specialItems[Random.Range(0, specialItems.Length)];
-                }
-                else
-                {
-                    tile.Item = currentLevelItems[Random.Range(0, currentLevelItems.Length)];
-                }
-
-                tile.isEmpty = false;
-                targetTiles.Add(tile);
-            }
-        }
-
-        if (!CheckIsThereAnyPossibleMatch())
-        {
-            foreach (var targetTile in targetTiles)
-            {
-                targetTile.isEmpty = true;
-            }
-
-            await SpawnNewTiles(retryCount + 1);
-        }
-        else
-        {
-            foreach (var targetTile in targetTiles)
-            {
-                var inflateItem = DOTween.Sequence();
-                inflateItem.Join(targetTile.icon.transform.DOScale(Vector3.one, tweenDuration));
-                await inflateItem.Play().AsyncWaitForCompletion();
-                targetTile.isEmpty = false;
-            }
-        }
-    }
-
-    private async void FillEmptyTiles(List<Tile> targetTiles)
-    {
-        var randomItem = currentLevelItems[Random.Range(0, currentLevelItems.Length)];
-        foreach (var tile in targetTiles)
-        {
-            tile.Item = randomItem;
-            var inflateItem = DOTween.Sequence();
-            inflateItem.Join(tile.icon.transform.DOScale(Vector3.one, tweenDuration));
-            await inflateItem.Play().AsyncWaitForCompletion();
-            tile.isEmpty = false;
-        }
-    }
-
-    private bool CheckIsThereAnyPossibleMatch()
-    {
-        for (var y = 0; y < height; y++)
-        {
-            for (var x = 0; x < width; x++)
-            {
-                var currentTile = tiles[x, y];
-
-                foreach (var tile in currentTile.Neighbours)
-                {
-                    if (tile)
+                    var rightBelowTile = tiles[x, y + 1];
+                    var belowTiles = new List<Tile> { };
+                    while (rightBelowTile.isEmpty)
                     {
-                        var oldItem1 = currentTile.Item;
-                        var oldItem2 = tile.Item;
-                        var currentTileItem = currentTile.Item;
-                        currentTile.Item = tile.Item;
-                        tile.Item = currentTileItem;
-                        if (CanPopHorizontal() || CanPopVertical())
+                        var emptyBelowTile = FindLowestEmptyTileBelow(tile.x, tile.y);
+                        if (emptyBelowTile.isEmpty)
                         {
-                            currentTile.Item = oldItem1;
-                            tile.Item = oldItem2;
-                            return true;
+                            emptyBelowTile.isEmpty = false;
+                            belowTiles.Add(emptyBelowTile);
                         }
+                    }
 
-                        currentTile.Item = oldItem1;
-                        tile.Item = oldItem2;
+                    belowTiles.Reverse();
+                    foreach (var belowTile in belowTiles)
+                    {
+                        var randomItem = currentLevelItems[Random.Range(0, currentLevelItems.Length)];
+                        belowTile.Item = randomItem;
+                        var inflateItem = DOTween.Sequence();
+                        inflateItem.Join(belowTile.icon.transform.DOScale(Vector3.one, tweenDuration));
+                        await inflateItem.Play().AsyncWaitForCompletion();
                     }
                 }
             }
         }
+    }
+    
+    private async Task SpawnNewTiles(int retryCount = 0)
+    {
+        const int maxRetries = 5;
+        List<Tile> targetTiles = new();
 
+        while (retryCount < maxRetries)
+        {
+            targetTiles.Clear();
+
+            for (int x = 0; x < height; x++)
+            {
+                var tile = tiles[x, 0];
+                if (!tile.isEmpty) continue;
+
+                tile.Item = Random.Range(0f, 1f) <= specialItemPossibility
+                    ? specialItems[Random.Range(0, specialItems.Length)]
+                    : currentLevelItems[Random.Range(0, currentLevelItems.Length)];
+
+                targetTiles.Add(tile);
+            }
+
+            if (CheckIsThereAnyPossibleMatch())
+            {
+                break;
+            }
+
+            retryCount++;
+        }
+
+        if (retryCount >= maxRetries)
+        {
+            ForceMatchForGrid();
+        }
+
+        var animations = new List<Task>();
+        foreach (var targetTile in targetTiles)
+        {
+            animations.Add(AnimateTileInflation(targetTile));
+            targetTile.isEmpty = false;
+        }
+
+        await Task.WhenAll(animations);
+    }
+
+    private void ForceMatchForGrid()
+    {
+        for (int x = 0; x < height; x++)
+        {
+            var tile = tiles[x, 0];
+            if (tile.isEmpty)
+            {
+                tile.Item = specialItems[Random.Range(0, specialItems.Length)];
+            }
+        }
+    }
+
+    private async Task AnimateTileInflation(Tile tile)
+    {
+        var inflateItem = DOTween.Sequence();
+        inflateItem.Join(tile.icon.transform.DOScale(Vector3.one, tweenDuration));
+        await inflateItem.Play().AsyncWaitForCompletion();
+    }
+
+    
+    private bool CheckIsThereAnyPossibleMatch()
+    {
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                var currentTile = tiles[x, y];
+                if (currentTile.isItObstacle) continue;
+
+                foreach (var tile in currentTile.Neighbours)
+                {
+                    if (tile == null || tile.isItObstacle) continue;
+
+                    (currentTile.Item, tile.Item) = (tile.Item, currentTile.Item);
+
+                    if (CanPopHorizontal() || CanPopVertical())
+                    {
+                        (currentTile.Item, tile.Item) = (tile.Item, currentTile.Item); 
+                        return true;
+                    }
+
+                    (currentTile.Item, tile.Item) = (tile.Item, currentTile.Item);
+                }
+            }
+        }
         return false;
     }
 
-    private bool IsThereEmptyTile()
+    private bool IsThereDropPossibility()
     {
-        for (var y = 0; y < height; y++)
+        for (var x = 0; x < width; x++)
         {
-            for (var x = 0; x < width; x++)
+            for (var y = 0; y < height - 1; y++)
             {
                 var tile = tiles[x, y];
-                if (tile.isEmpty) continue;
+                if (tile.isEmpty || tile.isItObstacle) continue;
 
-                var bottomTile = tile.Neighbours[3];
-                if (bottomTile == null) continue;
-
-                if (bottomTile.isEmpty)
+                var bottomTile = tiles[x, y + 1];
+                if (bottomTile != null && bottomTile.isEmpty)
                 {
                     return true;
                 }
@@ -271,6 +325,8 @@ public sealed class Board : MonoBehaviour
 
     public async void Select(Tile tile)
     {
+        if (tile.isItObstacle) return;
+            
         if (!_selection.Contains(tile))
         {
             if (_selection.Count > 0)
@@ -345,8 +401,14 @@ public sealed class Board : MonoBehaviour
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
+            {
+                var tile = tiles[x, y];
+
+                if (tile.isItObstacle) continue;
+                    
                 if (tiles[x, y].GetConnectedTiles(true).Skip(1).Count() >= 2 && levelManager.levelFinished == false)
                     return true;
+            }
         }
 
         return false;
@@ -357,8 +419,14 @@ public sealed class Board : MonoBehaviour
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
+            {
+                var tile = tiles[x, y];
+
+                if (tile.isItObstacle) continue;
+                
                 if (tiles[x, y].GetConnectedTiles().Skip(1).Count() >= 2 && levelManager.levelFinished == false)
-                    return true;
+                    return true;       
+            }
         }
 
         return false;
@@ -377,8 +445,7 @@ public sealed class Board : MonoBehaviour
                 y = 0;
             }
         }
-
-        DropUpperTiles();
+        UpdateBoard();
     }
 
     private async Task<bool> Pop(Tile tile, bool isVertical)
@@ -455,5 +522,22 @@ public sealed class Board : MonoBehaviour
         }
         levelManager.levelFinished = true;
         return true;
+    }
+
+    private bool IsThereObstacle()
+    {
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var tile = tiles[x, y];
+                if (tile.isItObstacle)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

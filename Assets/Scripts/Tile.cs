@@ -8,7 +8,7 @@ public sealed class Tile : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     public int x;
     public int y;
     private Vector3 startPosition;
-
+    [SerializeField] public bool isItObstacle;
     private Item _item;
 
     public Item Item
@@ -17,10 +17,12 @@ public sealed class Tile : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
         set
         {
+            if (isItObstacle) return;
+
             if (_item == value) return;
 
             _item = value;
-
+            
             icon.sprite = _item.sprite;
         }
     }
@@ -76,7 +78,7 @@ public sealed class Tile : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
         foreach (var neighbour in Neighbours)
         {
-            if (neighbour == null || exclude.Contains(neighbour) || isEmpty) continue;
+            if (neighbour == null || exclude.Contains(neighbour) || isEmpty || isItObstacle) continue;
 
             if (anchorTile == null && neighbour.Item is ISpecialItem == false)
             {
@@ -107,9 +109,12 @@ public sealed class Tile : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     public void OnBeginDrag(PointerEventData eventData)
     {
         startPosition = eventData.position;
-        Board.Instance.Select(this);
+        if (isItObstacle == false)
+        {
+            Board.Instance.Select(this);
+        }
     }
-    
+
     public void OnEndDrag(PointerEventData eventData)
     {
         var draggedObject = eventData.pointerDrag.gameObject;
@@ -119,30 +124,32 @@ public sealed class Tile : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
         const float threshold = 0.5f;
 
-        if (direction.y > threshold)
+        if (isItObstacle == false)
         {
-            Board.Instance.Select(draggedTile.Neighbours[1]);
-        }
-        else if (direction.y < -threshold)
-        {
-            Board.Instance.Select(draggedTile.Neighbours[3]);
-        }
-        else if (direction.x > threshold)
-        {
-            Board.Instance.Select(draggedTile.Neighbours[2]);
-        }
-        else if (direction.x < -threshold)
-        {
-            Board.Instance.Select(draggedTile.Neighbours[0]);
-        }
-        else
-        {
-            Debug.Log("Invalid Direction");
+            if (direction.y > threshold)
+            {
+                Board.Instance.Select(draggedTile.Neighbours[1]);
+            }
+            else if (direction.y < -threshold)
+            {
+                Board.Instance.Select(draggedTile.Neighbours[3]);
+            }
+            else if (direction.x > threshold)
+            {
+                Board.Instance.Select(draggedTile.Neighbours[2]);
+            }
+            else if (direction.x < -threshold)
+            {
+                Board.Instance.Select(draggedTile.Neighbours[0]);
+            }
+            else
+            {
+                Debug.Log("Invalid Direction");
+            }
         }
     }
-    
+
     public void OnDrag(PointerEventData eventData)
     {
-
     }
 }
