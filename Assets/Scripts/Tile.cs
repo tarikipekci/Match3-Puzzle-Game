@@ -44,27 +44,56 @@ public sealed class Tile : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         Bottom
     };
 
-    bool CanMatch(Tile tile1, Tile tile2, Tile anchorTile)
+    bool CanMatch(Tile tile1, Tile tile2, Tile baseTile)
     {
-        if (anchorTile == null) return false;
+        if (baseTile == null) return false;
 
-        if (tile1.Item is ISpecialItem || tile2.Item is ISpecialItem)
+        if (tile1.Item is ISpecialItem && tile2.Item is ISpecialItem && baseTile.Item is ISpecialItem)
         {
-            var nonSpecialTile = tile1.Item is ISpecialItem ? tile2 : tile1;
-            return nonSpecialTile.Item == anchorTile.Item;
+            if (tile1.Item == tile2.Item && tile2.Item == baseTile.Item)
+            {
+                return true;
+            }
         }
 
-        return tile1.Item == tile2.Item;
+        if ((tile1.Item is ISpecialItem && tile2.Item is ISpecialItem && baseTile.Item is not ISpecialItem) ||
+            (tile1.Item is ISpecialItem && baseTile.Item is ISpecialItem && tile2.Item is not ISpecialItem) ||
+            (tile2.Item is ISpecialItem && baseTile.Item is ISpecialItem && tile1.Item is not ISpecialItem))
+        {
+            if ((tile1.Item == tile2.Item) || (tile1.Item == baseTile.Item) || (tile2.Item == baseTile.Item))
+            {
+                return true;
+            }
+        }
+
+        if (tile1.Item is not ISpecialItem && tile2.Item is not ISpecialItem && baseTile.Item is not ISpecialItem)
+        {
+            if (tile1.Item == tile2.Item && tile2.Item == baseTile.Item)
+            {
+                return true;
+            }
+        }
+
+        if ((tile1.Item is not ISpecialItem && tile2.Item is not ISpecialItem && baseTile.Item is ISpecialItem) ||
+            (tile1.Item is not ISpecialItem && baseTile.Item is not ISpecialItem && tile2.Item is ISpecialItem) ||
+            (tile2.Item is not ISpecialItem && baseTile.Item is not ISpecialItem && tile1.Item is ISpecialItem))
+        {
+            if ((tile1.Item == tile2.Item) || (tile1.Item == baseTile.Item) || (tile2.Item == baseTile.Item))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-
-    public List<Tile> GetConnectedTiles(bool isVertical = false, List<Tile> exclude = null, Tile anchorTile = null)
+    public List<Tile> GetConnectedTiles(bool isVertical = false, List<Tile> exclude = null, Tile baseTile = null)
     {
         var result = new List<Tile> { this };
 
-        if (anchorTile == null)
+        if (baseTile == null)
         {
-            anchorTile = Item is ISpecialItem == false ? this : null;
+            baseTile = Item is ISpecialItem == false ? this : null;
         }
 
         if (exclude == null)
@@ -80,25 +109,25 @@ public sealed class Tile : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         {
             if (neighbour == null || exclude.Contains(neighbour) || isEmpty || isItObstacle) continue;
 
-            if (anchorTile == null && neighbour.Item is ISpecialItem == false)
+            if (baseTile == null && neighbour.Item is ISpecialItem == false)
             {
-                anchorTile = neighbour;
+                baseTile = neighbour;
             }
 
-            if (anchorTile == null || !CanMatch(this, neighbour, anchorTile)) continue;
+            if (baseTile == null || !CanMatch(this, neighbour, baseTile)) continue;
 
             if (isVertical)
             {
                 if (neighbour.x == x)
                 {
-                    result.AddRange(neighbour.GetConnectedTiles(true, exclude, anchorTile));
+                    result.AddRange(neighbour.GetConnectedTiles(true, exclude, baseTile));
                 }
             }
             else
             {
                 if (neighbour.y == y)
                 {
-                    result.AddRange(neighbour.GetConnectedTiles(false, exclude, anchorTile));
+                    result.AddRange(neighbour.GetConnectedTiles(false, exclude, baseTile));
                 }
             }
         }
@@ -111,6 +140,10 @@ public sealed class Tile : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         startPosition = eventData.position;
         if (isItObstacle == false)
         {
+            if (Board.Instance._selection.Count >= 1)
+            {
+                Board.Instance._selection.Clear();
+            }
             Board.Instance.Select(this);
         }
     }

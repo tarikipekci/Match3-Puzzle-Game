@@ -27,7 +27,7 @@ public sealed class Board : MonoBehaviour
     private const float specialItemPossibility = 0.1f;
     private bool isThereObstacle;
 
-    private List<Tile> _selection = new List<Tile> { };
+    public List<Tile> _selection = new List<Tile> { };
     private void Awake() => Instance = this;
 
     private void Start()
@@ -123,6 +123,7 @@ public sealed class Board : MonoBehaviour
                 var tile = tiles[x, y];
                 if (tile.isEmpty) continue;
                 if (tile.isItObstacle) continue;
+                if (IsBelowObstacle(tile)) continue;
                     
                 var lowestEmptyTileBelow = FindLowestEmptyTileBelow(x, y);
                     
@@ -140,6 +141,21 @@ public sealed class Board : MonoBehaviour
         return moved;
     }
 
+    private bool IsBelowObstacle(Tile tile)
+    {
+        var currentTile = tile;
+        for (int i = height; i >= 0; i--)
+        {
+            if (currentTile.isItObstacle)
+            {
+                currentTile = tiles[currentTile.x, currentTile.y - 1];
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
     private Tile FindLowestEmptyTileBelow(int x, int startY)
     {
         bool emptyTileFound = false;
@@ -325,6 +341,11 @@ public sealed class Board : MonoBehaviour
 
     public async void Select(Tile tile)
     {
+        if (tile == null)
+        {
+            _selection.Clear();
+            return;
+        }
         if (tile.isItObstacle) return;
             
         if (!_selection.Contains(tile))
