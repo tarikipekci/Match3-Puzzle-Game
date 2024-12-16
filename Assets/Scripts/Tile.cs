@@ -22,7 +22,7 @@ public sealed class Tile : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             if (_item == value) return;
 
             _item = value;
-            
+
             icon.sprite = _item.sprite;
         }
     }
@@ -144,6 +144,7 @@ public sealed class Tile : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             {
                 Board.Instance._selection.Clear();
             }
+
             Board.Instance.Select(this);
         }
     }
@@ -174,10 +175,6 @@ public sealed class Tile : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             else if (direction.x < -threshold)
             {
                 Board.Instance.Select(draggedTile.Neighbours[0]);
-            }
-            else
-            {
-                Debug.Log("Invalid Direction");
             }
         }
     }
