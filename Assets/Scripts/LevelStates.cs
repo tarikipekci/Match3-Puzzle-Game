@@ -47,6 +47,7 @@ public class LevelStates : MonoBehaviour
         {
             previousLevelIndex = 0;
         }
+
         var selectedLevelValue = level.value;
         if (levels[previousLevelIndex].value < 1)
         {
@@ -56,9 +57,14 @@ public class LevelStates : MonoBehaviour
         if (levels[previousLevelIndex].isCompleted)
         {
             selectedLevelValue = level.value;
+            PlayerPrefsBehaviour.SetCurrentLevelValue(selectedLevelValue);
+            SceneManager.LoadScene("Level" + selectedLevelValue);
         }
 
-        PlayerPrefsBehaviour.SetCurrentLevelValue(selectedLevelValue);
-        SceneManager.LoadScene("Level" + selectedLevelValue);
+        if (level.value == 1)
+        {
+            PlayerPrefsBehaviour.SetCurrentLevelValue(selectedLevelValue);
+            SceneManager.LoadScene("Level" + selectedLevelValue);
+        }
     }
 }

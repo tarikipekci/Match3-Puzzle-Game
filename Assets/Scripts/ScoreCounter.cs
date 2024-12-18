@@ -27,4 +27,11 @@ public sealed class ScoreCounter : MonoBehaviour
     {
         Instance = this;
     }
+
+    public void CalculateScoreMultiplication(Item item ,int connectedTileCount)
+    {
+        var multiplier = connectedTileCount / 3;
+        var intMultiplier = Mathf.Abs(multiplier);
+        Score += item.value * intMultiplier * connectedTileCount;
+    }
 }

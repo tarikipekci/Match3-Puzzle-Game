@@ -44,6 +44,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 234b7384d22492845925980966054093, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelTarget: []
+  levelTarget:
+    targetAmount: 
+    targetItem: []
   targetIcons: []
   targetAmounts: []
+  LevelStates: {fileID: 0}
+  resultPanel: {fileID: 0}
+  moveCountText: {fileID: 0}
+  currentScoreText: {fileID: 0}
+  bestScoreText: {fileID: 0}
+  resultText: {fileID: 0}
+  victoryTexture: {fileID: 21300000, guid: 43aca5eeaefcbe940a6e17307c98dfa5, type: 3}
+  failTexture: {fileID: 21300000, guid: 6ff326f4c09e2af49b8d9f00ab61f0ac, type: 3}
+  resultButtonImage: {fileID: 0}
+  numberOfMoves: 0
+  levelFinished: 0

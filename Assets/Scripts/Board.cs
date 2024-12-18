@@ -113,7 +113,23 @@ public sealed class Board : MonoBehaviour
             }
         }
 
-        canMakeMove = true;
+        if (HasTargetReached())
+        {
+            levelManager.resultPanel.SetActive(true);
+            var currentLevel = levelStates.levels[PlayerPrefsBehaviour.GetCurrentLevelValue() - 1];
+            currentLevel.isCompleted = true;
+            var currentScore = ScoreCounter.Instance.Score;
+            if (ScoreCounter.Instance.Score > currentLevel.BestScore)
+            {
+                currentLevel.BestScore =currentScore;
+            }
+            
+            levelManager.OpenResultPanel();
+        }
+        else
+        {
+            canMakeMove = true;
+        }
     }
 
     private bool DropTile(out List<Task> tasks)
@@ -510,7 +526,7 @@ public sealed class Board : MonoBehaviour
         foreach (var connectedTile in connectedTiles)
         {
             deflateSequence.Join(connectedTile.icon.transform.DOScale(Vector3.zero, tweenDuration));
-            await UpdateGoal(connectedTile);
+            UpdateGoal(connectedTile);
 
             connectedTile.isEmpty = true;
 
@@ -527,7 +543,7 @@ public sealed class Board : MonoBehaviour
             audioManager.soundEffects[0].Play();
         }
 
-        ScoreCounter.Instance.Score += tile.Item.value * connectedTiles.Count;
+        ScoreCounter.Instance.CalculateScoreMultiplication(tile.Item, connectedTiles.Count);
 
         foreach (var connectedTile in connectedTiles)
         {
@@ -537,7 +553,7 @@ public sealed class Board : MonoBehaviour
         return false;
     }
 
-    public async Task UpdateGoal(Tile connectedTile)
+    public void UpdateGoal(Tile connectedTile)
     {
         if (levelManager.levelTarget.targetItem.Contains(connectedTile.Item))
         {
@@ -549,15 +565,6 @@ public sealed class Board : MonoBehaviour
                     levelManager.levelTarget.targetAmount[targetIndex]--;
                     var currentAmount = levelManager.levelTarget.targetAmount[targetIndex];
                     levelManager.targetAmounts[targetIndex].text = currentAmount.ToString();
-                }
-
-                if (HasTargetReached())
-                {
-                    levelManager.victoryPanel.SetActive(true);
-                    levelStates.levels[PlayerPrefsBehaviour.GetCurrentLevelValue() - 1].isCompleted = true;
-                    var inflateSequence = DOTween.Sequence();
-                    inflateSequence.Join(levelManager.victoryPanel.transform.DOScale(Vector3.one, tweenDuration));
-                    await inflateSequence.Play().AsyncWaitForCompletion();
                 }
             }
         }

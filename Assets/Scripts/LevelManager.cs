@@ -1,5 +1,6 @@
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class LevelManager : MonoBehaviour
@@ -7,10 +8,15 @@ public class LevelManager : MonoBehaviour
     public Target levelTarget;
     public Image[] targetIcons;
     public Text[] targetAmounts;
-
-    public GameObject victoryPanel;
-    public GameObject failPanel;
+    [FormerlySerializedAs("LevelStates")] public LevelStates levelStates;
+    public GameObject resultPanel;
     public Text moveCountText;
+    public Text currentScoreText;
+    public Text bestScoreText;
+    public Text resultText;
+    public Sprite victoryTexture;
+    public Sprite failTexture;
+    public Image resultButtonImage;
     public int numberOfMoves;
     public bool levelFinished;
 
@@ -26,16 +32,39 @@ public class LevelManager : MonoBehaviour
     private async void Start()
     {
         var deflateSequence = DOTween.Sequence();
-        deflateSequence.Join(victoryPanel.transform.DOScale(Vector3.zero, 0));
-        deflateSequence.Join(failPanel.transform.DOScale(Vector3.zero, 0));
+        deflateSequence.Join(resultPanel.transform.DOScale(Vector3.zero, 0));
         await deflateSequence.Play().AsyncWaitForCompletion();
     }
 
-    private async void OpenFailPanel()
+    public async void OpenResultPanel()
     {
-        failPanel.SetActive(true);
+        if (levelFinished)
+        {
+            resultText.text = "Congrats";
+            resultButtonImage.sprite = victoryTexture;
+        }
+        else
+        {
+            resultText.text = "Failed";
+            resultButtonImage.sprite = failTexture;
+        }
+
+        var currentScore = ScoreCounter.Instance.Score;
+        var bestScore = levelStates.levels[PlayerPrefsBehaviour.GetCurrentLevelValue()].BestScore;
+        
+        currentScoreText.text = "Current: " + currentScore;
+        if (currentScore < bestScore)
+        {
+            bestScoreText.text = "Best: " + bestScore;   
+        }
+        else
+        {
+            bestScoreText.text = "Best: " + currentScore;
+        }
+        
+        resultPanel.SetActive(true);
         var inflateSequence = DOTween.Sequence();
-        inflateSequence.Join(failPanel.transform.DOScale(Vector3.one, Board.Instance.tweenDuration));
+        inflateSequence.Join(resultPanel.transform.DOScale(Vector3.one, Board.Instance.tweenDuration));
         await inflateSequence.Play().AsyncWaitForCompletion();
     }
 
@@ -47,8 +76,20 @@ public class LevelManager : MonoBehaviour
         {
             if (levelFinished == false)
             {
-                OpenFailPanel();
+                OpenResultPanel();
             }
+        }
+    }
+
+    public void ManageNextLevel()
+    {
+        if (levelFinished)
+        {
+            levelStates.LoadNextLevel();
+        }
+        else
+        {
+            levelStates.LoadSameLevel();
         }
     }
 }

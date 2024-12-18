@@ -22,7 +22,7 @@ namespace SpecialItems
 
                         currentTile.isEmpty = true;
 
-                        await Board.Instance.UpdateGoal(currentTile);
+                        Board.Instance.UpdateGoal(currentTile);
                     }
                 }
             }

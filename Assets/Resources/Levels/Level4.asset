@@ -13,4 +13,6 @@ MonoBehaviour:
   m_Name: Level4
   m_EditorClassIdentifier: 
   value: 4
-  isCompleted: 0
+  guid: 
+  _isCompleted: 0
+  _bestScore: 0

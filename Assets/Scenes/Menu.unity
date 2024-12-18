@@ -2778,12 +2778,16 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4282351235952237603, guid: 94fd6c939ba13a141a58f90810dbbed2, type: 3}
       propertyPath: levels.Array.size
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 4282351235952237603, guid: 94fd6c939ba13a141a58f90810dbbed2, type: 3}
       propertyPath: levels.Array.data[2]
       value: 
       objectReference: {fileID: 11400000, guid: a51940f211aade348b251cf823ff09c0, type: 2}
+    - target: {fileID: 4282351235952237603, guid: 94fd6c939ba13a141a58f90810dbbed2, type: 3}
+      propertyPath: levels.Array.data[3]
+      value: 
+      objectReference: {fileID: 11400000, guid: 9bc83a3c5244acb49abbacc968c264a4, type: 2}
     - target: {fileID: 4593772195692896139, guid: 94fd6c939ba13a141a58f90810dbbed2, type: 3}
       propertyPath: m_Name
       value: LevelStates
