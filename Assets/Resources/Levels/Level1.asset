@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Level1
   m_EditorClassIdentifier: 
   value: 1
-  guid: 
-  _isCompleted: 0
-  _bestScore: 0
+  guid: 1f7b088f-0beb-4af8-9320-87e79d40cf39
+  _isCompleted: 1
+  _bestScore: 936

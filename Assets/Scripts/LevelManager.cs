@@ -50,7 +50,7 @@ public class LevelManager : MonoBehaviour
         }
 
         var currentScore = ScoreCounter.Instance.Score;
-        var bestScore = levelStates.levels[PlayerPrefsBehaviour.GetCurrentLevelValue()].BestScore;
+        var bestScore = levelStates.levels[PlayerPrefsBehaviour.GetCurrentLevelValue() - 1].BestScore;
         
         currentScoreText.text = "Current: " + currentScore;
         if (currentScore < bestScore)

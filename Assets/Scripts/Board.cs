@@ -108,27 +108,29 @@ public sealed class Board : MonoBehaviour
                 {
                     StartPop(true);
                 }
+                else
+                {
+                    if (HasTargetReached())
+                    {
+                        levelManager.resultPanel.SetActive(true);
+                        var currentLevel = levelStates.levels[PlayerPrefsBehaviour.GetCurrentLevelValue() - 1];
+                        currentLevel.isCompleted = true;
+                        var currentScore = ScoreCounter.Instance.Score;
+                        if (ScoreCounter.Instance.Score > currentLevel.BestScore)
+                        {
+                            currentLevel.BestScore = currentScore;
+                        }
+
+                        levelManager.OpenResultPanel();
+                    }
+                    else
+                    {
+                        canMakeMove = true;
+                    }
+                }
 
                 break;
             }
-        }
-
-        if (HasTargetReached())
-        {
-            levelManager.resultPanel.SetActive(true);
-            var currentLevel = levelStates.levels[PlayerPrefsBehaviour.GetCurrentLevelValue() - 1];
-            currentLevel.isCompleted = true;
-            var currentScore = ScoreCounter.Instance.Score;
-            if (ScoreCounter.Instance.Score > currentLevel.BestScore)
-            {
-                currentLevel.BestScore =currentScore;
-            }
-            
-            levelManager.OpenResultPanel();
-        }
-        else
-        {
-            canMakeMove = true;
         }
     }
 
