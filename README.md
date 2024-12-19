@@ -1,18 +1,10 @@
-Gameplay 
-![output](https://github.com/user-attachments/assets/1011bb60-9065-45bf-bd63-e59cae62dee2)
+Gameplay
 
-Main Menu
-![1](https://github.com/user-attachments/assets/805eeb03-f829-444d-baba-1c1b15a864f1)
+![output](https://github.com/user-attachments/assets/ced0d1a0-2986-4b67-83e4-31cd84494b32)
 
-Level Selection Panel
-![2](https://github.com/user-attachments/assets/f51a7475-065d-4127-9aba-c47acdb03839)
 
-Result Panel
-![3](https://github.com/user-attachments/assets/6453d27a-790e-4ff2-9400-d973858c4a21)
-
-Settings Panel
-![4](https://github.com/user-attachments/assets/e0db7c37-2dcb-41d4-bd77-f65982d345f7)
-
-Level 4 Image
-![5](https://github.com/user-attachments/assets/af168b6b-429b-47d7-bd89-36aa5d82a7da)
-
+![Screenshot_20241219_203730_Match3](https://github.com/user-attachments/assets/8b09cae4-01c1-44a2-85a6-24e8dd129865)
+![Screenshot_20241219_203716_Match3](https://github.com/user-attachments/assets/4e50b4b0-4eec-43fd-8012-b0574769f766)
+![Screenshot_20241219_203608_Match3](https://github.com/user-attachments/assets/6aaef10d-7f82-47c7-b240-30689bd3bafa)
+![Screenshot_20241219_203603_Match3](https://github.com/user-attachments/assets/6b16392a-d633-4cb6-adc0-6484d9f5c8e9)
+![Screenshot_20241219_204720_Match3](https://github.com/user-attachments/assets/18ab907f-759d-4727-8094-36f3667be584)
