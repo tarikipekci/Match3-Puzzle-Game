@@ -1,10 +1,14 @@
 using UnityEngine;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 [CreateAssetMenu(menuName = "Match3/Level")]
 public class Level : ScriptableObject
 {
     public int value;
-    public string guid;
+    [SerializeField] private string guid;
 
     [SerializeField] private bool _isCompleted;
     [SerializeField] private int _bestScore;
@@ -34,11 +38,17 @@ public class Level : ScriptableObject
 
     private void OnEnable()
     {
-        // Only generate a new GUID if one does not already exist
+        _isCompleted = isCompleted;
+        _bestScore = BestScore;
         if (string.IsNullOrEmpty(guid))
         {
             guid = System.Guid.NewGuid().ToString();
             Debug.Log($"New GUID generated for {name}: {guid}");
+
+#if UNITY_EDITOR
+            EditorUtility.SetDirty(this);
+            AssetDatabase.SaveAssets();
+#endif
         }
     }
 

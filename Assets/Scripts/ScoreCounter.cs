@@ -13,7 +13,7 @@ public sealed class ScoreCounter : MonoBehaviour
     {
         get => _score;
 
-        set
+        private set
         {
             if (_score == value) return;
 
