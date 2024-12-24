@@ -2,18 +2,17 @@ using UnityEngine;
 
 public class DontDestroyOnLoadManager : MonoBehaviour
 {
+    private static DontDestroyOnLoadManager instance;
+
     private void Awake()
     {
-        var existingObjects = FindObjectsOfType<DontDestroyOnLoadManager>();
-        foreach (var obj in existingObjects)
+        if (instance != null)
         {
-            if (obj != this && obj.name == name)
-            {
-                Destroy(obj); 
-                return;
-            }
+            Destroy(gameObject);
+            return;
         }
 
-        DontDestroyOnLoad(gameObject);
+        instance = this;
+        DontDestroyOnLoad(gameObject);  
     }
 }
