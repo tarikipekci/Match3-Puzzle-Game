@@ -1,6 +1,3 @@
-Gameplay
-
-![output](https://github.com/user-attachments/assets/ced0d1a0-2986-4b67-83e4-31cd84494b32)
 
 ![Screenshot_20241219_203603_Match3](https://github.com/user-attachments/assets/6b16392a-d633-4cb6-adc0-6484d9f5c8e9)
 
